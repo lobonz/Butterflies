@@ -1,7 +1,7 @@
 class Node extends PVector{
 	PVector velocity = new PVector();
 	float minX = 65, minY = 30, maxY = height-30, maxX = width - 65;
-	float damping = 0.1;
+	float damping = 0.5;
   
   Node(float theX, float theY){
   	x = theX;

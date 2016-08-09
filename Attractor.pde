@@ -1,6 +1,6 @@
 class Attractor{
 	float x = 0, y = 0;
-	float radius = 300;
+	float radius = 800;
 	
 	Attractor(float theY, float theX){
 		x = theX;

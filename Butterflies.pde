@@ -1,19 +1,22 @@
-//Kinect
-import org.openkinect.*;
-import org.openkinect.processing.*;                    
-KinectTracker tracker;
+//Kinect               
+import kinect4WinSDK.Kinect;
+import kinect4WinSDK.SkeletonData;
 Kinect kinect;
+ArrayList <SkeletonData> bodies;
 
 //Projection Mapping
-import processing.opengl.*;
-import codeanticode.glgraphics.*;
+//LOBO//import processing.opengl.*;
+//LOBO//import codeanticode.glgraphics.*;
 import deadpixel.keystone.*;   
-GLGraphicsOffScreen offscreenA; 
+
+//LOBO//GLGraphicsOffScreen offscreenA;
+PGraphics offscreenA;
+
 Keystone ks;
 CornerPinSurface surfaceA;
 
 //Setup
-int nodeCount = 3;
+int nodeCount = 100;
 Node[] myNodes = new Node[nodeCount];
 Butterfly[] myButterflies = new Butterfly[nodeCount];
 
@@ -21,23 +24,26 @@ Attractor myAttractor;
 
 boolean showRadius = true;
 boolean showCenter = false;
-boolean showDepth = false;
-boolean switchKinect = false;
+boolean showDepth = true;
+boolean switchKinect = true;
+
+PImage bee;
 
 void setup() {	
-
-  size(640, 480, GLConstants.GLGRAPHICS);  
-
+  size(1200, 900, P3D);  
+  //bee = loadImage("bee.png");
+  
 	//Kinect
 	if (switchKinect){
   	kinect = new Kinect(this);
-	  tracker = new KinectTracker();
-		tracker.setThreshold(650);
-		kinect.tilt(0);  
+    smooth();
+    bodies = new ArrayList<SkeletonData>();
 	}
 	
 	//Projection Mapping
-  offscreenA = new GLGraphicsOffScreen(this, width-10, height-10);
+  //LOBO//offscreenA = new GLGraphicsOffScreen(this, width-10, height-10);
+  offscreenA = createGraphics(10, 10);
+  
   ks = new Keystone(this);
   surfaceA = ks.createCornerPinSurface(width, height, 20);    
 
@@ -58,7 +64,7 @@ void setup() {
 void draw() {        
 	//Kinect
 	if (switchKinect){
-		tracker.track();  
+		//tracker.track();  
 	}
 	//noCursor();  
 
@@ -67,36 +73,51 @@ void draw() {
   offscreenA.beginDraw();
   
 	lights();
-  background(0); 
-
+  background(100); 
+  
+  
 	//Kinect
 	if (switchKinect){
 		//Show depth image
 			if (showDepth){
-				tracker.display();
+        image(kinect.GetDepth(), 0, 0, 320, 240);
+        image(kinect.GetImage(), 0, 240, 320, 240);
+        image(kinect.GetMask(), 0, 480, 320, 240);
+        for (int i=0; i<bodies.size (); i++) 
+        {
+          drawSkeleton(bodies.get(i));
+          //drawPosition(bodies.get(i));
+        }
+				//LOBO//tracker.display();
 			}
 		//Let's draw the raw location
-		PVector v1 = tracker.getPos();
+		//LOBO//PVector v1 = tracker.getPos();
 		/*fill(50,100,250,200);
 		noStroke();
 		ellipse(v1.x,v1.y,20,20);*/
 		//Let's draw the "lerped" location
-		PVector v2 = tracker.getLerpedPos();
+		//LOBO//PVector v2 = tracker.getLerpedPos();
 		/*fill(100,250,50,200);
 		noStroke();
 		ellipse(v2.x,v2.y,20,20);*/                                 
 		// Display some info
-		int t = tracker.getThreshold();
+		//LOBO//int t = tracker.getThreshold();
 		fill(0);
-		println("threshold: " + t + "    " +  "framerate: " + (int)frameRate);
+		//LOBO//println("threshold: " + t + "    " +  "framerate: " + (int)frameRate);
 
-		myAttractor.x = v2.x;
-		myAttractor.y = v2.y;
+		//myAttractor.x = Kinect.NUI_SKELETON_POSITION_HAND_RIGHT).x;
+		//myAttractor.y = Kinect.NUI_SKELETON_POSITION_HAND_RIGHT).y;
+    //myAttractor.x = mouseX;
+    //myAttractor.y = mouseY;
+    
 	} else {
+  
 		myAttractor.x = mouseX;
 		myAttractor.y = mouseY;
 	}
 	
+  //println(myAttractor.x + " " + myAttractor.y);
+
 	for (int i = 0; i<nodeCount; i++){
 		myAttractor.attract(myNodes[i]);
 		myNodes[i].update();		
@@ -112,13 +133,13 @@ void draw() {
 		ellipseMode(CENTER);	
 		fill(200,80);                 
 		if (switchKinect){  		
-			//ellipse(v2.x, v2.y,5,5);
+			ellipse(myAttractor.x, myAttractor.y,5,5);
 		} else {      
 			ellipse(mouseX, mouseY,5,5);    
 		}
 		fill(200,80);                 
 		if (switchKinect){  
-			//ellipse(v2.x, v2.y,200,200);  
+			ellipse(myAttractor.x, myAttractor.y,5,5);  
 		} else {
 			ellipse(mouseX, mouseY,200,200);
 		}
@@ -126,14 +147,18 @@ void draw() {
 
 	//Projection Mapping
   offscreenA.endDraw();  
-  background(0);            
-  surfaceA.render(offscreenA.getTexture());                 
+  //background(0);  
+  
+  //LOBO//surfaceA.render(offscreenA.getTexture());
+  surfaceA.render(offscreenA);
+  //surfaceA.render(bee);
 
 }
 
 
 void keyPressed(){
 	
+  /*
 	//Kinect - Change Threshhold with Up/Down Key
 	int t = tracker.getThreshold();
   if (key == CODED) {
@@ -146,7 +171,8 @@ void keyPressed(){
       tracker.setThreshold(t);
     }
   }
-	
+	*/
+
   switch(key) {               
 
 	//Show At  traction Radius
@@ -189,5 +215,147 @@ void keyPressed(){
   }	                   
 }
 
+void drawPosition(SkeletonData _s) 
+{
+  noStroke();
+  fill(0, 100, 255);
+  String s1 = str(_s.dwTrackingID);
+  text(s1, _s.position.x*width/2, _s.position.y*height/2);
+}
 
+void drawSkeleton(SkeletonData _s) 
+{
+  myAttractor.x =  _s.skeletonPositions[Kinect.NUI_SKELETON_POSITION_HAND_RIGHT].x*width;
+  myAttractor.y = _s.skeletonPositions[Kinect.NUI_SKELETON_POSITION_HAND_RIGHT].y*height;
+  println(myAttractor.x + " " + myAttractor.y);
+  // Body
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_HEAD, 
+  Kinect.NUI_SKELETON_POSITION_SHOULDER_CENTER);
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_SHOULDER_CENTER, 
+  Kinect.NUI_SKELETON_POSITION_SHOULDER_LEFT);
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_SHOULDER_CENTER, 
+  Kinect.NUI_SKELETON_POSITION_SHOULDER_RIGHT);
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_SHOULDER_CENTER, 
+  Kinect.NUI_SKELETON_POSITION_SPINE);
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_SHOULDER_LEFT, 
+  Kinect.NUI_SKELETON_POSITION_SPINE);
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_SHOULDER_RIGHT, 
+  Kinect.NUI_SKELETON_POSITION_SPINE);
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_SPINE, 
+  Kinect.NUI_SKELETON_POSITION_HIP_CENTER);
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_HIP_CENTER, 
+  Kinect.NUI_SKELETON_POSITION_HIP_LEFT);
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_HIP_CENTER, 
+  Kinect.NUI_SKELETON_POSITION_HIP_RIGHT);
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_HIP_LEFT, 
+  Kinect.NUI_SKELETON_POSITION_HIP_RIGHT);
 
+  // Left Arm
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_SHOULDER_LEFT, 
+  Kinect.NUI_SKELETON_POSITION_ELBOW_LEFT);
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_ELBOW_LEFT, 
+  Kinect.NUI_SKELETON_POSITION_WRIST_LEFT);
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_WRIST_LEFT, 
+  Kinect.NUI_SKELETON_POSITION_HAND_LEFT);
+
+  // Right Arm
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_SHOULDER_RIGHT, 
+  Kinect.NUI_SKELETON_POSITION_ELBOW_RIGHT);
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_ELBOW_RIGHT, 
+  Kinect.NUI_SKELETON_POSITION_WRIST_RIGHT);
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_WRIST_RIGHT, 
+  Kinect.NUI_SKELETON_POSITION_HAND_RIGHT);
+
+  // Left Leg
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_HIP_LEFT, 
+  Kinect.NUI_SKELETON_POSITION_KNEE_LEFT);
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_KNEE_LEFT, 
+  Kinect.NUI_SKELETON_POSITION_ANKLE_LEFT);
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_ANKLE_LEFT, 
+  Kinect.NUI_SKELETON_POSITION_FOOT_LEFT);
+
+  // Right Leg
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_HIP_RIGHT, 
+  Kinect.NUI_SKELETON_POSITION_KNEE_RIGHT);
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_KNEE_RIGHT, 
+  Kinect.NUI_SKELETON_POSITION_ANKLE_RIGHT);
+  DrawBone(_s, 
+  Kinect.NUI_SKELETON_POSITION_ANKLE_RIGHT, 
+  Kinect.NUI_SKELETON_POSITION_FOOT_RIGHT);
+}
+
+void DrawBone(SkeletonData _s, int _j1, int _j2) 
+{
+  noFill();
+  stroke(255, 255, 0);
+  if (_s.skeletonPositionTrackingState[_j1] != Kinect.NUI_SKELETON_POSITION_NOT_TRACKED &&
+    _s.skeletonPositionTrackingState[_j2] != Kinect.NUI_SKELETON_POSITION_NOT_TRACKED) {
+    line(_s.skeletonPositions[_j1].x*width, 
+    _s.skeletonPositions[_j1].y*height, 
+    _s.skeletonPositions[_j2].x*width, 
+    _s.skeletonPositions[_j2].y*height);
+  }
+}
+
+void appearEvent(SkeletonData _s) 
+{
+  if (_s.trackingState == Kinect.NUI_SKELETON_NOT_TRACKED) 
+  {
+    return;
+  }
+  synchronized(bodies) {
+    bodies.add(_s);
+  }
+}
+
+void disappearEvent(SkeletonData _s) 
+{
+  synchronized(bodies) {
+    for (int i=bodies.size ()-1; i>=0; i--) 
+    {
+      if (_s.dwTrackingID == bodies.get(i).dwTrackingID) 
+      {
+        bodies.remove(i);
+      }
+    }
+  }
+}
+
+void moveEvent(SkeletonData _b, SkeletonData _a) 
+{
+  if (_a.trackingState == Kinect.NUI_SKELETON_NOT_TRACKED) 
+  {
+    return;
+  }
+  synchronized(bodies) {
+    for (int i=bodies.size ()-1; i>=0; i--) 
+    {
+      if (_b.dwTrackingID == bodies.get(i).dwTrackingID) 
+      {
+        bodies.get(i).copy(_a);
+        break;
+      }
+    }
+  }
+}

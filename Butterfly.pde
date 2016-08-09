@@ -3,14 +3,14 @@ class Butterfly{
 	float posY;
 	int speed;               
 	int ang; 
-	int flapSpeed = 25;
+	int flapSpeed = 20;
 	int flap = 1;  
 	int w = 20;
 	
 	Butterfly(){
 		this.posX = width/2+random(0,100);
 		this.posY = height/2+random(0,100);
-		this.speed = 5;		
+		this.speed = 1;		
 		this.ang = 0;
 	}                
 
